@@ -1,8 +1,10 @@
 use v6;
 
-class HTTP::Client::Request
+class HTTP::Client::Request;
 
 ## This is the request class. It represents a request to an HTTP server.
+
+use MIME::Base64;
 
 #### Private constants
 constant MULTIPART  = 'multipart/form-data';
@@ -18,6 +20,9 @@ has $!proto is rw;             ## The protocol we will be connecting to.
 has $!host is rw;              ## The host we are going to connect to.
 has $!port is rw;              ## The port we are going to connect to.
 has $!path is rw;              ## The path we are going to get.
+has $!user is rw;              ## Username, if needed, for Authentication.
+has $!pass is rw;              ## Password, if needed, for Authentication.
+has $!auth is rw;              ## Auth type, can be Basic or Digest.
 has $!type is rw = URLENCODED; ## Default to urlencoded forms.
 has $!query is rw = '';        ## Part to add after the URL.
 has $!data is rw = '';         ## The data body for POST/PUT.
@@ -27,11 +32,14 @@ has $!boundary is rw;          ## A unique boundary, set on first use.
 #### Grammars
 
 ## A grammar representing a URL, as per our usage anyway.
+## This is temporary until the URI library is working under "nom"
+## then we'll move to using that instead, as it is far more complete.
 grammar URL {
   regex TOP {
     ^
       <proto>
       '://'
+      [<auth>'@']?
       <host>
       [':'<port>]?
       <path>
@@ -40,10 +48,20 @@ grammar URL {
   token proto { \w+ }
   token host  { [\w|'.'|'-']+ }
   token port  { \d+ }
+  token user  { \w+ }               ## That's right, simplest usernames only.
+  token pass  { [\w|'-'|'+'|'%']+ } ## Fairly simple passwords only too.
+  token auth  { <user> ':' <pass> } ## This assumes Basic Auth.
   regex path  { .* }
 }
 
 #### Public Methods
+
+## Encode a username and password into Base64 for Basic Auth.
+method base64encode ($user, $pass) {
+  my $mime    = MIME::Base64.new();
+  my $encoded = $mime.encode_base64($user~':'~$pass);
+  return $encoded;
+}
 
 ## Parse a URL into host, port and path.
 method url ($url) {
@@ -56,6 +74,12 @@ method url ($url) {
     }
     if (~$match<path>) {
       $!path = ~$match<path>;
+    }
+    if ($match<auth>) {
+      ## The only auth we support via URL is Basic.
+      $!auth = 'Basic';
+      $!user = $match<auth><user>;
+      $!pass = $match<auth><pass>;
     }
   }
 }
@@ -132,7 +156,7 @@ method !randomstr {
       $num -= $ran;
     }
   }
-  $str = $num.base(36);
+  my $str = $num.base(36);
   if 2.rand.Int {
     $str.=lc;
   }
@@ -219,34 +243,61 @@ method has-header ($name) {
   return False;
 }
 
-## The method that actually builds the Request.
-method request-text {
+## The method that actually builds the Request
+## that will be sent to the HTTP Server.
+method Str {
   my $version = $.client.http-version;
   my $output = "$.method $!path HTTP/$version$CRLF";
+  self.add-header('Connection'=>'close');
+  if ! self.has-header('User-Agent') {
+    my $useragent = $.client.user-agent;
+    self.add-header('User-Agent'=>$useragent);
+  }
   if $!port {
-    self.add-header('Host'=>"$!host:$port");
+    self.add-header('Host'=>$!host~':'~$!port);
   }
   else {
     self.add-header('Host'=>$!host);
   }
   if ! self.has-header('Accept') {
-    self.add-header('Accept'=>'*/*');
+    ## The following is a hideous workaround for a bug in vim
+    ## which breaks the perl6 plugin. It is there for my editing sanity
+    ## only, and does not affect the end result.
+    my $star = '*';
+    self.add-header('Accept'=>"$star/$star");
   }
   if $.method eq 'POST' | 'PUT' {
-    $output ~= "Content-Type: $!type$CRLF";
+    self.add-header('Content-Type'=>$!type);
   }
+  if $!auth {
+    if $!auth eq 'Basic' { ## Only one we're supporting right now.
+      my $authstring = self.base64encode($!user, $!pass);
+      self.add-header('Authorization'=>"Basic $authstring");
+    }
+  }
+  if $!data {
+    if $!type eq MULTIPART { 
+      ## End our default boundary.
+      $!data ~= "--{$!boundary}--$CRLF";
+    }
+    my $length = $!data.bytes;
+    self.add-header('Content-Length'=>$length);
+  }
+  ## Okay, add the headers.
   for @!headers -> $header {
     if $header.key eq 'Content-Type' | 'Content-Length' { next; }
     $output ~= "{$header.key}: {$header.value}$CRLF";
   }
-  if ($.method eq 'POST' | 'PUT') && $!data {
-    if $!type eq MULTIPART { 
-      $!data ~= "--{$!boundary}--$CRLF";
-    }
-    my $length = $!data.chars;
-    $output ~= "Content-Length: $length$CRLF";
-    $output ~= $CRLF
-    $output ~= $!data;
+  if $!data {
+    $output ~= $CRLF;   ## Add a blank line, notifying the end of headers.
+    $output ~= $!data;  ## Add the data.
   }
   return $output;
 }
+
+## Execute the request. This is actually just a convenience
+## wrapper for do-request() in the HTTP::Client class.
+method run (:$follow) {
+  $.client.do-request(self, :$follow);
+}
+

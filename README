@@ -30,7 +30,7 @@ A more advanced POST application/x-www-form-urlencoded request:
   ## You could also do $request.set-content('query=libwww-perl&mode=dist');
   ## But I think letting the library build your content for you, is nicer.
   $request.add-field(:query<libwww-perl>, :mode<dist>);
-  my $response = $request.run; ## or $client.request($request);
+  my $response = $request.run; ## or $client.do-request($request);
   ...
 
 A more advanced POST multipart/form-data request:
@@ -60,8 +60,15 @@ see WWW::App. Full disclosure: I wrote both of those libraries too.
 = Requirements =
 
 * Rakudo Perl 6      <http://rakudo.org/>
-* URI                <https://github.com/ihrd/uri/>
 * MIME::Base64       <https://github.com/snarkyboojum/Perl6-MIME-Base64/>
+
+It should also require:
+
+* URI                <https://github.com/ihrd/uri/>
+
+But at the current time, that module is not compiling under "nom" which
+the rest of this is focused on, so for the time being, I'm using a very
+limited inline URI grammar instead.
 
 = Author =
 
