@@ -2,6 +2,6 @@
   "name"        : "HTTP::Client",
   "version"     : "*",
   "description" : "A flexible HTTP Client library",
-  "depends"     : [ "MIME::Base64" ],
+  "depends"     : [ "MIME::Base64", "HTTP::Status" ],
   "source-url"  : "git://github.com/supernovus/perl6-http-client.git"
 }

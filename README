@@ -60,6 +60,7 @@ see WWW::App. Full disclosure: I wrote both of those libraries too.
 = Requirements =
 
 * Rakudo Perl 6      <http://rakudo.org/>
+* HTTP::Status       <https://github.com/supernovus/perl6-http-status/>
 * MIME::Base64       <https://github.com/snarkyboojum/Perl6-MIME-Base64/>
 
 It should also require:
