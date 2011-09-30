@@ -1,0 +1,73 @@
+HTTP::Client -- Perl 6 library for building HTTP Clients
+----------------------------------------------------------
+
+Inspired by LWP and HTTP::Client from Perl 5, and LWP::Simple
+from Perl 6, this is a simple class for building HTTP clients 
+using Perl 6.
+
+It's not based on any of those when it comes to API, but instead
+offers a flexible syntax that's easy to use, and easy to extend.
+
+It currently only supports HTTP itself. HTTP+SSL (HTTPS) support
+is planned for a future version.
+
+= Usage =
+
+A simple GET request, without an intermetiary Request object:
+
+  my $client = HTTP::Client.new;
+  my $response = $client.get('http://example.com/web/service');
+  if ($response.success) {
+    say $response.content;
+  }
+
+A more advanced POST application/x-www-form-urlencoded request:
+
+  my $client = HTTP::Client.new;
+  my $request = $client.post; ## Note we are not setting the URI/URL.
+  $request.url('http://example.com/web/service');
+  ## The following line creates Request variables called query and mode.
+  ## You could also do $request.set-content('query=libwww-perl&mode=dist');
+  ## But I think letting the library build your content for you, is nicer.
+  $request.add-field(:query<libwww-perl>, :mode<dist>);
+  my $response = $request.run; ## or $client.request($request);
+  ...
+
+A more advanced POST multipart/form-data request:
+
+  my $client = HTTP::Client.new;
+  my $request = $client.post(:multipart);
+  $request.url('http://example.com/web/service');
+  $request.add-field(:id(37271));
+  $request.add-file(
+    :name("upload"),     :filename("file.txt"), 
+    :type("text/plain"), :content("hello world...")
+  );
+  my $response = $request.run;
+
+= Notes =
+
+As seen above, there is no need to build HTTP::Client::Request objects
+manually. Just use the appropriate method (get, post, head, put, delete)
+or use $client.make-request($method); for methods that don't have methods
+in HTTP::Client (TRACE, OPTIONS, CONNECT, PATCH, DEBUG, etc.)
+
+As it's name states, this library is specifically for HTTP Clients.
+If you want something for building HTTP Servers, see HTTP::Easy.
+If you want something for Request/Reponse objects for your Web Application, 
+see WWW::App. Full disclosure: I wrote both of those libraries too.
+
+= Requirements =
+
+* Rakudo Perl 6      <http://rakudo.org/>
+* URI                <https://github.com/ihrd/uri/>
+* MIME::Base64       <https://github.com/snarkyboojum/Perl6-MIME-Base64/>
+
+= Author =
+
+Timothy Totten
+
+= License =
+
+Artistic License 2.0
+
