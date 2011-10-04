@@ -5,7 +5,7 @@ class HTTP::Client;
 our $VERSION = '0.2'; ## The version of HTTP::Client.
 
 ## We offer a default user/agent.
-has $.user-agent   is rw = "HTTP::Client/$VERSION Perl6/$*PERL<version>";
+has $.user-agent   is rw = "perl6-HTTP::Client/$VERSION"; # Perl6/$*PERL<version>";
 has $.http-version is rw = '1.1'; ## Supported HTTP version.
 
 ## This is the main class. It handles the magic.
@@ -87,9 +87,9 @@ method put ($url?, :%query, :%data, :%files, :$multipart, :$follow) {
 }
 
 ## Do the request
-method do-request (HTTP::Client::Request $request, Int :$follow=0) {
-  if ($request.proto ne 'http') {
-    die "Unsupported protocol, '$request.proto'.";
+method do-request (HTTP::Client::Request $request, :$follow=0) {
+  if ($request.protocol ne 'http') {
+    die "Unsupported protocol, '$request.protocol'.";
   }
 
   my $host = $request.host;

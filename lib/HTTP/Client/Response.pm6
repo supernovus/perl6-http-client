@@ -68,7 +68,7 @@ method header ($wanted) {
 
 ## de-chunking algorithm stolen shamelessly from LWP::Simple
 method dechunk (@contents) {
-  my $transfer = self.header('Transfer-Encoding');
+  my $transfer = self.header('Transfer-Encoding').value;
   if ! $transfer || $transfer !~~ /:i chunked/ {
     ## dechunking only to be done if Transfer-Encoding says so.
     return @contents;
@@ -134,7 +134,7 @@ method redirect (:$loose, :$url) {
   if $loose {
     if $.status ~~ /^3/ {
       if $url {
-        return self.header('Location');
+        return self.header('Location').value;
       }
       return True;
     }
@@ -142,7 +142,7 @@ method redirect (:$loose, :$url) {
   else {
     if $.status ~~ /30 <[12]>/ {
       if $url {
-        return self.header('Location');
+        return self.header('Location').value;
       }
       return True;
     }
