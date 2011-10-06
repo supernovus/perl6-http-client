@@ -14,7 +14,7 @@ my $http = HTTP::Client.new;
 #my $res = $htto.get('http://huri.net/test.txt');
 my $req = $http.post;
 $req.url('http://127.0.0.1:8080/test.txt');
-$req.add-field(:name<Bob>);
+$req.add-field(:query<libwww-perl>, :mode<dist>);
 my $res = $req.run;
 #$*ERR.say: "~Status: "~$res.status;
 #$*ERR.say: "~Message: "~$res.message;
