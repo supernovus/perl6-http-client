@@ -89,19 +89,21 @@ method put ($url?, :%query, :%data, :%files, :$multipart, :$follow) {
 ## Do the request
 method do-request (HTTP::Client::Request $request, :$follow=0) {
   if ($request.protocol ne 'http') {
-    die "Unsupported protocol, '$request.protocol'.";
+    die "Unsupported protocol, '{$request.protocol}'.";
   }
 
   my $host = $request.host;
   my $port = 80;
   if $request.port { $port = $request.port; }
 
+#  $*ERR.say: "Connecting to '$host' on '$port'";
+
   my $sock = IO::Socket::INET.new(:$host, :$port);
   $sock.send(~$request);
   my $resp = $sock.recv();
   $sock.close();
 
-  my $response = HTTP::Response.new($resp, self);
+  my $response = HTTP::Client::Response.new($resp, self);
   if $follow && $response.redirect {
     my $newurl = $response.header('Location');
     if ! $newurl {

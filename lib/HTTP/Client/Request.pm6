@@ -70,7 +70,10 @@ method url ($url) {
     $!proto = ~$match<proto>;
     $!host  = ~$match<host>;
     if ($match<port>) {
-      $!port = +$match<port>;
+      my $port = ~$match<port>;
+#      $*ERR.say: "port is "~$port.perl;
+      $!port = +$port;
+#      $*ERR.say: "Setting port to $!port";
     }
     if (~$match<path>) {
       $!path = ~$match<path>;
@@ -217,7 +220,7 @@ method make-part (
 ## Add a multipart section to our data.
 method add-part ($value, :$type, :$binary, :$disp='form-data', *%conf) {
   if $!type ne MULTIPART { return; } ## We only work on multipart.
-  $!data ~= self.make-part($.boundary, $disp, $value, :$type, :$binary, |%conf);
+  $!data ~= self.make-part($.boundary, $value, :$type, :$binary, :$disp, |%conf);
 }
 
 ## Add a file upload

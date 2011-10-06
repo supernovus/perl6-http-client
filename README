@@ -57,6 +57,12 @@ If you want something for building HTTP Servers, see HTTP::Easy.
 If you want something for Request/Reponse objects for your Web Application, 
 see WWW::App. Full disclosure: I wrote both of those libraries too.
 
+Also, there are some weird issues with the IO::Socket::INET library in
+the current Rakudo nom, which are affecting connecting to outside servers.
+So the tests in the t/ folder currently depend on the HTTP::Easy library,
+and in particular, the examples/test.p6 script from HTTP::Easy to be running
+before you run the tests.
+
 = Requirements =
 
 * Rakudo Perl 6      <http://rakudo.org/>

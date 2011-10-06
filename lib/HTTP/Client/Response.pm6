@@ -13,7 +13,7 @@ constant $CRLF = "\x0D\x0A";
 has $.client;        ## Our parent HTTP::Client object.
 has $.status;        ## The HTTP status code (numeric only.)
 has $.message;       ## The text HTTP status message.
-has $.proto;         ## HTTP proto/version returned by server.
+has $.protocol;      ## HTTP proto/version returned by server.
 
 ## Private members
 has @!headers;       ## The server response headers. An Array of Pairs.
@@ -26,21 +26,36 @@ has @!content;       ## The body of the message from the server.
 ## We override new, and expect the response from the server
 ## to be passed in, as well as a copy of our HTTP::Client object.
 method new ($server_response, $client) {
-  my @content = $server_response.split(/\n/);
+#  $*ERR.say: "Server response: $server_response";
+  my @content = $server_response.split($CRLF);
   my $status_line = @content.shift;
-  my ($proto, $status, $message) = $status_line.split(/\s/);
+  my ($protocol, $status, $message) = $status_line.split(/\s/);
   if ! $message {
     $message = get_http_status_msg($status);
   }
   my @headers;
   while @content {
     my $line = @content.shift;
+#    $*ERR.say: "Parsing line: $line";
     last if $line eq ''; ## End of headers.
     my ($name, $value) = $line.split(': ');
     my $header = $name => $value;
     @headers.push: $header;
   }
-  self.bless(*, :$client, :$status, :$message, :$proto, :@headers, :@content);
+#  $*ERR.say: "Contents after: "~@content.perl;
+#  $*ERR.say: "Headers after: "~@headers.perl;
+  self.bless(*, 
+    :$client, :$status, :$message, :$protocol     ##,
+#    :headers(@headers), :content(@content)       ## Bug? These aren't set.
+  )!initialize(@headers, @content);
+}
+
+## The initialize method is a hack, due to private members not being set.
+## in the bless method.
+method !initialize ($headers, $content) {
+  @!headers := @($headers);
+  @!content := @($content);
+  return self;
 }
 
 multi method headers () {
@@ -49,18 +64,32 @@ multi method headers () {
 
 multi method headers ($wanted) {
   my @matched;
+  my $raw = False;
+  if $wanted ~~ Regex { $raw = True; }
   for @!headers -> $header {
     if $header.key ~~ $wanted {
-      @matched.push: $header;
+      if $raw {
+        @matched.push: $header;
+      }
+      else {
+        @matched.push: $header.value;
+      }
     }
   }
   return @matched;
 }
 
 method header ($wanted) {
+  my $raw = False;
+  if $wanted ~~ Regex { $raw = True; }
   for @!headers -> $header {
     if $header.key ~~ $wanted {
-      return $header;
+      if $raw {
+        return $header;
+      }
+      else {
+        return $header.value;
+      }
     }
   }
   return; ## Sorry, we didn't find anything.
@@ -68,7 +97,7 @@ method header ($wanted) {
 
 ## de-chunking algorithm stolen shamelessly from LWP::Simple
 method dechunk (@contents) {
-  my $transfer = self.header('Transfer-Encoding').value;
+  my $transfer = self.header('Transfer-Encoding');
   if ! $transfer || $transfer !~~ /:i chunked/ {
     ## dechunking only to be done if Transfer-Encoding says so.
     return @contents;
@@ -91,9 +120,9 @@ method dechunk (@contents) {
     while $length > 0 && @contents.exists($pos) {
       my $line = @contents[$pos];
       $length -= $line.bytes; #.bytes, not .chars
-      $length--;              # <CR>
+      #$length--;              # <CR> removed.
       $pos++;
-     }
+    }
 
     ## Stop decoding when a zero is encountered, RFC2616 again.
     if $length == 0 {
@@ -106,6 +135,7 @@ method dechunk (@contents) {
 }
 
 method contents (Bool :$dechunk=True) {
+#  $*ERR.say: "contents -- "~@!content.perl;
   if $dechunk {
     return self.dechunk(@!content);
   }
@@ -113,7 +143,7 @@ method contents (Bool :$dechunk=True) {
 }
 
 method content (Bool :$dechunk=True) {
-  return self.contents(:$dechunk).join("\n");
+  return self.contents(:$dechunk).join($CRLF);
 }
 
 method success (:$loose) {
@@ -134,7 +164,7 @@ method redirect (:$loose, :$url) {
   if $loose {
     if $.status ~~ /^3/ {
       if $url {
-        return self.header('Location').value;
+        return self.header('Location');
       }
       return True;
     }
@@ -142,7 +172,7 @@ method redirect (:$loose, :$url) {
   else {
     if $.status ~~ /30 <[12]>/ {
       if $url {
-        return self.header('Location').value;
+        return self.header('Location');
       }
       return True;
     }
