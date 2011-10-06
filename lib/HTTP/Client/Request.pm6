@@ -203,7 +203,7 @@ method make-part (
   my $part = "--$boundary$CRLF";
   $part ~= "Content-Disposition: $disp";
   for %conf.kv -> $key, $val {
-    $part ~= "; $key=\"$value\"";
+    $part ~= "; $key=\"$val\"";
   }
   $part ~= $CRLF; ## End of disposition header.
   if $type {
