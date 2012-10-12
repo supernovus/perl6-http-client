@@ -5,6 +5,7 @@ class HTTP::Client::Request;
 ## This is the request class. It represents a request to an HTTP server.
 
 use MIME::Base64;
+use URI;
 
 #### Private constants
 constant MULTIPART  = 'multipart/form-data';
@@ -16,6 +17,7 @@ has $.method;                  ## The HTTP Method for the request.
 has $.client;                  ## Our parent HTTP::Client object.
 
 #### Private members.
+has $!uri handles 'scheme', 'host', 'port', 'path', 'query', 'frag', 'segments'
 has $!proto is rw;             ## The protocol we will be connecting to.
 has $!host is rw;              ## The host we are going to connect to.
 has $!port is rw;              ## The port we are going to connect to.
@@ -29,31 +31,6 @@ has $!data is rw = '';         ## The data body for POST/PUT.
 has @!headers;                 ## Extra headers in Pair format, for sending.
 has $!boundary is rw;          ## A unique boundary, set on first use.
 
-#### Grammars
-
-## A grammar representing a URL, as per our usage anyway.
-## This is temporary until the URI library is working under "nom"
-## then we'll move to using that instead, as it is far more complete.
-grammar URL {
-  regex TOP {
-    ^
-      <proto>
-      '://'
-      [<auth>'@']?
-      <host>
-      [':'<port>]?
-      <path>
-    $
-  }
-  token proto { \w+ }
-  token host  { [\w|'.'|'-']+ }
-  token port  { \d+ }
-  token user  { \w+ }               ## That's right, simplest usernames only.
-  token pass  { [\w|'-'|'+'|'%']+ } ## Fairly simple passwords only too.
-  token auth  { <user> ':' <pass> } ## This assumes Basic Auth.
-  regex path  { .* }
-}
-
 #### Public Methods
 
 ## Encode a username and password into Base64 for Basic Auth.
@@ -63,9 +40,13 @@ method base64encode ($user, $pass) {
   return $encoded;
 }
 
-## Parse a URL into host, port and path.
+## Parse a URL.
 method url ($url) {
-  my $match = URL.parse($url);
+  my $uri = URI.new($url);
+  $!proto = $uri.scheme;
+  $!host  = $uri.host;
+  $!port  = $uri.port;
+  ## TODO: holy shit this whole library needs a rewrite.
   if ($match) {
     $!proto = ~$match<proto>;
     $!host  = ~$match<host>;
