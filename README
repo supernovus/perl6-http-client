@@ -1,5 +1,11 @@
 HTTP::Client -- Perl 6 library for building HTTP Clients
-----------------------------------------------------------
+-------------------------------------------------------------------------------
+
+NOTE: This library is going to have a major rewrite coming up shortly.
+      A lot of things will be gutted and overhauled.
+      Stay tuned for more details!
+
+-------------------------------------------------------------------------------
 
 Inspired by LWP and HTTP::Client from Perl 5, and LWP::Simple
 from Perl 6, this is a simple class for building HTTP clients 
