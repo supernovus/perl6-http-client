@@ -12,83 +12,45 @@ constant MULTIPART  = 'multipart/form-data';
 constant URLENCODED = 'application/x-www-form-urlencoded';
 constant $CRLF      = "\x0D\x0A";
 
-#### Immutable public members.
+#### Members.
+has $.uri handles 'scheme', 'host', 'port', 'path', 'frag', 'segments'
 has $.method;                  ## The HTTP Method for the request.
 has $.client;                  ## Our parent HTTP::Client object.
-
-#### Private members.
-has $!uri handles 'scheme', 'host', 'port', 'path', 'query', 'frag', 'segments'
-has $!proto is rw;             ## The protocol we will be connecting to.
-has $!host is rw;              ## The host we are going to connect to.
-has $!port is rw;              ## The port we are going to connect to.
-has $!path is rw;              ## The path we are going to get.
-has $!user is rw;              ## Username, if needed, for Authentication.
-has $!pass is rw;              ## Password, if needed, for Authentication.
-has $!auth is rw;              ## Auth type, can be Basic or Digest.
-has $!type is rw = URLENCODED; ## Default to urlencoded forms.
-has $!query is rw = '';        ## Part to add after the URL.
-has $!data is rw = '';         ## The data body for POST/PUT.
-has @!headers;                 ## Extra headers in Pair format, for sending.
-has $!boundary is rw;          ## A unique boundary, set on first use.
+has $!auth_type                ## Basic or Digest.
+has $!auth_info                ## Content depends on auth type.
+has $!type  = URLENCODED;      ## Default to urlencoded forms.
+has $.query = '';              ## Part to add after the URL.
+has @.data;                    ## The data body for POST/PUT.
+has @.headers;                 ## Extra headers in Pair format, for sending.
+has $!boundary;                ## A unique boundary, set on first use.
 
 #### Public Methods
 
 ## Encode a username and password into Base64 for Basic Auth.
-method base64encode ($user, $pass) {
+method base64encode ($user, $pass) 
+{
   my $mime    = MIME::Base64.new();
   my $encoded = $mime.encode_base64($user~':'~$pass);
   return $encoded;
 }
 
 ## Parse a URL.
-method url ($url) {
-  my $uri = URI.new($url);
-  $!proto = $uri.scheme;
-  $!host  = $uri.host;
-  $!port  = $uri.port;
-  ## TODO: holy shit this whole library needs a rewrite.
-  if ($match) {
-    $!proto = ~$match<proto>;
-    $!host  = ~$match<host>;
-    if ($match<port>) {
-      my $port = ~$match<port>;
-#      $*ERR.say: "port is "~$port.perl;
-      $!port = +$port;
-#      $*ERR.say: "Setting port to $!port";
-    }
-    if (~$match<path>) {
-      $!path = ~$match<path>;
-    }
-    if ($match<auth>) {
-      ## The only auth we support via URL is Basic.
-      $!auth = 'Basic';
-      $!user = $match<auth><user>;
-      $!pass = $match<auth><pass>;
-    }
+method url ($url) 
+{
+  $!uri = URI.new($url);
+  my $authbit = $!uri.grammar.parse_result<URI_reference><URI><authority>;
+  if $authbit<userinfo>
+  {
+    $!auth = 'Basic';
+    my ($user, $pass) = ~$authbit<userinfo>.split(':', 2);
+    $!user = $user;
+    $!pass = $pass;
   }
-}
-
-## Get the protocol
-method protocol {
-  return $!proto;
-}
-
-## Get the hostname
-method host {
-  return $!host;
-}
-
-## Get the custom port.
-## If this is not set, the library requesting it should use
-## whatever is the default port for the protocol.
-method port {
-  return $!port;
-}
-
-## Get the path. If this is not set, you should use '/' or whatever
-## makes sense in your application.
-method path {
-  return $!path;
+  my $query = $!uri.query;
+  if $query
+  {
+    $!query = $query;
+  }
 }
 
 ## Use multipart POST/PUT.
@@ -155,22 +117,32 @@ method boundary {
 }
 
 ## Add data fields.
-method add-field (*%queries) {
+method add-field (*%queries) 
+{
   ## First off, this only works on POST and PUT.
-  if $.method ne 'POST' | 'PUT' {
+  if $.method ne 'POST' | 'PUT' 
+  {
     return self.add-query(|%queries);
   }
-  if $!type eq URLENCODED {
-    self.build-query($!data, %queries);
+  if $!type eq URLENCODED 
+  {
+    my $query-data;
+    self.build-query($query-data, %queries);
+    @!data.push($query-data);
   }
-  elsif $!type eq MULTIPART {
-    for %queries.kv -> $name, $value {
-      if ($value ~~ Array) {
-        for @($value) -> $subval {
+  elsif $!type eq MULTIPART 
+  {
+    for %queries.kv -> $name, $value 
+    {
+      if ($value ~~ Array) 
+      {
+        for @($value) -> $subval 
+        {
           self.add-part($subval, :$name);
         }
       }
-      else {
+      else 
+      {
         self.add-part($value, :$name);
       }
     }
@@ -178,50 +150,67 @@ method add-field (*%queries) {
 }
 
 ## Make a multipart section.
-method make-part (
-  $boundary, $value, :$type, :$binary, :$disp='form-data', *%conf
-) {
+method make-part
+($boundary, $value, :$type, :$binary, :$disp='form-data', *%conf) 
+{
   my $part = "--$boundary$CRLF";
   $part ~= "Content-Disposition: $disp";
-  for %conf.kv -> $key, $val {
+  for %conf.kv -> $key, $val 
+  {
     $part ~= "; $key=\"$val\"";
   }
   $part ~= $CRLF; ## End of disposition header.
-  if $type {
+  if $type 
+  {
     $part ~= "Content-Type: $type$CRLF";
   }
-  if $binary {
+  if $binary 
+  {
     $part ~= "Content-Transfer-Encoding: binary$CRLF";
   }
   $part ~= $CRLF; ## End of headers.
-  $part ~= $value ~ $CRLF;
+  if $binary
+  {
+    if $value ~~ Buf
+    {
+      $part = $part.encode ~ $value
+    }
+    else
+    {
+      $part = $part.encode ~ $value.Str.encode;
+    }
+  }
+  else
+  {
+    $part ~= $value ~ $CRLF;
+  }
   return $part;
 }
 
 ## Add a multipart section to our data.
-method add-part ($value, :$type, :$binary, :$disp='form-data', *%conf) {
+method add-part ($value, :$type, :$binary, :$disp='form-data', *%conf) 
+{
   if $!type ne MULTIPART { return; } ## We only work on multipart.
-  $!data ~= self.make-part($.boundary, $value, :$type, :$binary, :$disp, |%conf);
+  @!data.push: self.make-part($.boundary, $value, :$type, :$binary, :$disp, |%conf);
 }
 
 ## Add a file upload
-method add-file (:$name!, :$filename!, :$content!, :$type, :$binary) {
+method add-file (:$name!, :$filename!, :$content!, :$type, :$binary) 
+{
   self.add-part($content, :$type, :$binary, :$name, :$filename);
 }
 
-## Set the data directly (may be useful for some web services.)
-method set-content ($content) {
-  $!data = $content;
-}
-
 ## Add an extra header
-method add-header (Pair $pair) {
+method add-header (Pair $pair) 
+{
   @!headers.push: $pair;
 }
 
 ## See if a given header exists
-method has-header ($name) {
-  for @!headers -> $header {
+method has-header ($name) 
+{
+  for @!headers -> $header 
+  {
     if $header.key eq $name { return True; }
   }
   return False;
@@ -229,50 +218,66 @@ method has-header ($name) {
 
 ## The method that actually builds the Request
 ## that will be sent to the HTTP Server.
-method Str {
+method Str 
+{
   my $version = $.client.http-version;
-  my $output = "$.method $!path HTTP/$version$CRLF";
+  my $output = "$.method $.path HTTP/$version$CRLF";
   self.add-header('Connection'=>'close');
-  if ! self.has-header('User-Agent') {
+  if ! self.has-header('User-Agent') 
+  {
     my $useragent = $.client.user-agent;
     self.add-header('User-Agent'=>$useragent);
   }
-  if $!port {
+  if $!port 
+  {
     self.add-header('Host'=>$!host~':'~$!port);
   }
-  else {
+  else 
+  {
     self.add-header('Host'=>$!host);
   }
-  if ! self.has-header('Accept') {
+  if ! self.has-header('Accept') 
+  {
     ## The following is a hideous workaround for a bug in vim
     ## which breaks the perl6 plugin. It is there for my editing sanity
     ## only, and does not affect the end result.
     my $star = '*';
     self.add-header('Accept'=>"$star/$star");
   }
-  if $.method eq 'POST' | 'PUT' {
+  if $.method eq 'POST' | 'PUT' 
+  {
     self.add-header('Content-Type'=>$!type);
   }
-  if $!auth {
-    if $!auth eq 'Basic' { ## Only one we're supporting right now.
-      my $authstring = self.base64encode($!user, $!pass);
-      self.add-header('Authorization'=>"Basic $authstring");
+  if $!auth-type && $!auth-info 
+  {
+    if $!auth-type.lc eq 'basic' 
+    { 
+      self.add-header('Authorization'=>"Basic $!auth-info");
+    }
+    else
+    {
+      die "Sorry, we don't support $!auth-type yet.";
     }
   }
-  if $!data {
-    if $!type eq MULTIPART { 
+  if @!data.elems > 0
+  {
+    if $!type eq MULTIPART 
+    { 
       ## End our default boundary.
-      $!data ~= "--{$!boundary}--$CRLF";
+      my $end = "--{$!boundary}--$CRLF";
+      ## TODO: finish this.
     }
     my $length = $!data.bytes;
     self.add-header('Content-Length'=>$length);
   }
   ## Okay, add the headers.
-  for @!headers -> $header {
+  for @!headers -> $header 
+  {
     if $header.key eq 'Content-Type' | 'Content-Length' { next; }
     $output ~= "{$header.key}: {$header.value}$CRLF";
   }
-  if $!data {
+  if $!data 
+  {
     $output ~= $CRLF;   ## Add a blank line, notifying the end of headers.
     $output ~= $!data;  ## Add the data.
   }
@@ -281,7 +286,8 @@ method Str {
 
 ## Execute the request. This is actually just a convenience
 ## wrapper for do-request() in the HTTP::Client class.
-method run (:$follow) {
+method run (:$follow) 
+{
   $.client.do-request(self, :$follow);
 }
 

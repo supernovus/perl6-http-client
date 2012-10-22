@@ -2,7 +2,7 @@ use v6;
 
 class HTTP::Client;
 
-our $VERSION = '0.2'; ## The version of HTTP::Client.
+our $VERSION = '0.3'; ## The version of HTTP::Client.
 
 ## We offer a default user/agent.
 has $.user-agent   is rw = "perl6-HTTP::Client/$VERSION"; # Perl6/$*PERL<version>";
@@ -51,10 +51,10 @@ method simple-request ($method, $url?, :%query, :$follow) {
 method data-request 
 ($method, $url?, :%query, :%data, :%files, :$multipart, :$follow) {
   if ($url) {
-    my $req = self.make-request('POST', $url, :%query, :%data, :%files, :$multipart);
+    my $req = self.make-request($method, $url, :%query, :%data, :%files, :$multipart);
     return self.do-request($req, :$follow);
   }
-  self.make-request('POST', :$multipart); ## Only multipart option is used.
+  self.make-request($method, :$multipart); ## Only multipart option is used.
 }
 
 ## GET request
