@@ -1,5 +1,6 @@
-HTTP::Client -- Perl 6 library for building HTTP Clients
-----------------------------------------------------------
+# HTTP::Client -- Perl 6 library for building HTTP Clients
+
+## Introduction
 
 Inspired by LWP and HTTP::Client from Perl 5, and LWP::Simple
 from Perl 6, this is a simple class for building HTTP clients 
@@ -11,18 +12,21 @@ offers a flexible syntax that's easy to use, and easy to extend.
 It currently only supports HTTP itself. HTTP+SSL (HTTPS) support
 is planned for a future version.
 
-= Usage =
+## Usage
 
 A simple GET request, without an intermetiary Request object:
 
+```perl
   my $client = HTTP::Client.new;
   my $response = $client.get('http://example.com/web/service');
   if ($response.success) {
     say $response.content;
   }
+```
 
 A more advanced POST application/x-www-form-urlencoded request:
 
+```perl
   my $client = HTTP::Client.new;
   my $request = $client.post; ## Note we are not setting the URI/URL.
   $request.url('http://example.com/web/service');
@@ -32,9 +36,11 @@ A more advanced POST application/x-www-form-urlencoded request:
   $request.add-field(:query<libwww-perl>, :mode<dist>);
   my $response = $request.run; ## or $client.do-request($request);
   ...
+```
 
 A more advanced POST multipart/form-data request:
 
+```perl
   my $client = HTTP::Client.new;
   my $request = $client.post(:multipart);
   $request.url('http://example.com/web/service');
@@ -44,8 +50,9 @@ A more advanced POST multipart/form-data request:
     :type("text/plain"), :content("hello world...")
   );
   my $response = $request.run;
+```
 
-= Notes =
+## Notes
 
 As seen above, there is no need to build HTTP::Client::Request objects
 manually. Just use the appropriate method (get, post, head, put, delete)
@@ -57,31 +64,17 @@ If you want something for building HTTP Servers, see HTTP::Easy.
 If you want something for Request/Reponse objects for your Web Application, 
 see WWW::App. Full disclosure: I wrote both of those libraries too.
 
-Also, there are some weird issues with the IO::Socket::INET library in
-the current Rakudo nom, which are affecting connecting to outside servers.
-So the tests in the t/ folder currently depend on the HTTP::Easy library,
-and in particular, the examples/test.p6 script from HTTP::Easy to be running
-before you run the tests.
+## Requirements
 
-= Requirements =
+ * [HTTP::Status](https://github.com/supernovus/perl6-http-status/)
+ * [MIME::Base64](https://github.com/snarkyboojum/Perl6-MIME-Base64/)
+ * [URI](https://github.com/ihrd/uri/)
 
-* Rakudo Perl 6      <http://rakudo.org/>
-* HTTP::Status       <https://github.com/supernovus/perl6-http-status/>
-* MIME::Base64       <https://github.com/snarkyboojum/Perl6-MIME-Base64/>
+## Author
 
-It should also require:
+Timothy Totten, supernovus on #perl6, https://github.com/supernovus/
 
-* URI                <https://github.com/ihrd/uri/>
-
-But at the current time, that module is not compiling under "nom" which
-the rest of this is focused on, so for the time being, I'm using a very
-limited inline URI grammar instead.
-
-= Author =
-
-Timothy Totten
-
-= License =
+## License
 
 Artistic License 2.0
 

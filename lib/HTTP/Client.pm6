@@ -5,7 +5,7 @@ class HTTP::Client;
 our $VERSION = '0.3'; ## The version of HTTP::Client.
 
 ## We offer a default user/agent.
-has $.user-agent   is rw = "perl6-HTTP::Client/$VERSION"; # Perl6/$*PERL<version>";
+has $.user-agent   is rw = "perl6-HTTP::Client/$VERSION"; 
 has $.http-version is rw = '1.1'; ## Supported HTTP version.
 
 ## This is the main class. It handles the magic.
@@ -98,18 +98,16 @@ method do-request (HTTP::Client::Request $request, :$follow=0) {
 
 #  $*ERR.say: "Connecting to '$host' on '$port'";
 
-  my $sock = IO::Socket::INET.new(:$host, :$port);
-  $sock.send(~$request);
-  my $resp = $sock.recv();
-  $sock.close();
-
-  my $response = HTTP::Client::Response.new($resp, self);
-  if $follow && $response.redirect {
-    my $newurl = $response.header('Location');
-    if ! $newurl {
+  my $socket = IO::Socket::INET.new(:$host, :$port);
+  $socket.send(~$request);
+  my $response = HTTP::Client::Response.new($socket, self);
+  my $redirect = $response.redirect(:url);
+  if $follow && $redirect.defined
+  {
+    if ! $redirect {
       die "Tried to follow a redirect that provided no URL.";
     }
-    $request.url($newurl);
+    $request.url($redirect);
     return self.do-request($request, :follow($follow-1));
   }
   return $response;

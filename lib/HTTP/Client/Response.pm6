@@ -23,10 +23,9 @@ has @!content;       ## The body of the message from the server.
                      ## Use $response.contents() for the array, or
                      ## $response.content() for a string.
 
-## We override new, and expect the response from the server
+## We override new, and expect the socket representing our connection
 ## to be passed in, as well as a copy of our HTTP::Client object.
-method new ($server_response, $client) {
-#  $*ERR.say: "Server response: $server_response";
+multi method new ($socket, $client) {
   my @content = $server_response.split($CRLF);
   my $status_line = @content.shift;
   my ($protocol, $status, $message) = $status_line.split(/\s/);
@@ -36,22 +35,15 @@ method new ($server_response, $client) {
   my @headers;
   while @content {
     my $line = @content.shift;
-#    $*ERR.say: "Parsing line: $line";
     last if $line eq ''; ## End of headers.
     my ($name, $value) = $line.split(': ');
     my $header = $name => $value;
     @headers.push: $header;
   }
-#  $*ERR.say: "Contents after: "~@content.perl;
-#  $*ERR.say: "Headers after: "~@headers.perl;
-  self.bless(*, 
-    :$client, :$status, :$message, :$protocol     ##,
-#    :headers(@headers), :content(@content)       ## Bug? These aren't set.
-  )!initialize(@headers, @content);
+  self.new(:$client, :$status, :$message, :$protocol)!initialize(@headers, @content);
 }
 
-## The initialize method is a hack, due to private members not being set.
-## in the bless method.
+## Used by new() to set the private members on the newly created instance.
 method !initialize ($headers, $content) {
   @!headers := @($headers);
   @!content := @($content);
@@ -135,7 +127,6 @@ method dechunk (@contents) {
 }
 
 method contents (Bool :$dechunk=True) {
-#  $*ERR.say: "contents -- "~@!content.perl;
   if $dechunk {
     return self.dechunk(@!content);
   }
