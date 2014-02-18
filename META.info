@@ -3,5 +3,10 @@
   "version"     : "*",
   "description" : "A flexible HTTP Client library with Request and Response objects, chunked transfers, multipart POST, and more!",
   "depends"     : [ "MIME::Base64", "HTTP::Status", "URI" ],
+  "provides" : {
+    "HTTP::Client"           : "lib/HTTP/Client.pm6",
+    "HTTP::Client::Request"  : "lib/HTTP/Client/Request.pm6",
+    "HTTP::Client::Response" : "lib/HTTP/Client/Response.pm6"
+  },
   "source-url"  : "git://github.com/supernovus/perl6-http-client.git"
 }
