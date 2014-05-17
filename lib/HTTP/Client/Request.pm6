@@ -16,18 +16,18 @@ has $.method;                  ## The HTTP Method for the request.
 has $.client;                  ## Our parent HTTP::Client object.
 
 #### Private members.
-has $!proto is rw;             ## The protocol we will be connecting to.
-has $!host is rw;              ## The host we are going to connect to.
-has $!port is rw;              ## The port we are going to connect to.
-has $!path is rw;              ## The path we are going to get.
-has $!user is rw;              ## Username, if needed, for Authentication.
-has $!pass is rw;              ## Password, if needed, for Authentication.
-has $!auth is rw;              ## Auth type, can be Basic or Digest.
-has $!type is rw = URLENCODED; ## Default to urlencoded forms.
-has $!query is rw = '';        ## Part to add after the URL.
-has $!data is rw = '';         ## The data body for POST/PUT.
+has $!proto;             ## The protocol we will be connecting to.
+has $!host;              ## The host we are going to connect to.
+has $!port;              ## The port we are going to connect to.
+has $!path;              ## The path we are going to get.
+has $!user;              ## Username, if needed, for Authentication.
+has $!pass;              ## Password, if needed, for Authentication.
+has $!auth;              ## Auth type, can be Basic or Digest.
+has $!type = URLENCODED; ## Default to urlencoded forms.
+has $!query = '';        ## Part to add after the URL.
+has $!data = '';         ## The data body for POST/PUT.
 has @!headers;                 ## Extra headers in Pair format, for sending.
-has $!boundary is rw;          ## A unique boundary, set on first use.
+has $!boundary;          ## A unique boundary, set on first use.
 
 #### Grammars
 
@@ -295,6 +295,7 @@ method Str {
     $output ~= $CRLF;   ## Add a blank line, notifying the end of headers.
     $output ~= $!data;  ## Add the data.
   }
+  $output ~= $CRLF;
   return $output;
 }
 
