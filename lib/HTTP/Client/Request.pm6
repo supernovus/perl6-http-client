@@ -77,6 +77,8 @@ method url ($url) {
     }
     if (~$match<path>) {
       $!path = ~$match<path>;
+    } else {
+      $!path = '/';
     }
     if ($match<auth>) {
       ## The only auth we support via URL is Basic.
@@ -283,7 +285,7 @@ method Str {
       ## End our default boundary.
       $!data ~= "--{$!boundary}--$CRLF";
     }
-    my $length = $!data.bytes;
+    my $length = $!data.chars;
     self.add-header('Content-Length'=>$length);
   }
   ## Okay, add the headers.
