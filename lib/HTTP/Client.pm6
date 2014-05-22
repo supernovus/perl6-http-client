@@ -100,7 +100,12 @@ method do-request (HTTP::Client::Request $request, :$follow=0) {
 
   my $sock = IO::Socket::INET.new(:$host, :$port);
   $sock.send(~$request);
-  my $resp = $sock.recv();
+  my $resp;
+  my $chunk;
+  repeat {
+      $chunk = $sock.recv();
+      $resp ~= $chunk;
+  } while $chunk;
   $sock.close();
 
   my $response = HTTP::Client::Response.new($resp, self);

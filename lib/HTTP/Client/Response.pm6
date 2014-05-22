@@ -44,7 +44,7 @@ method new ($server_response, $client) {
   }
 #  $*ERR.say: "Contents after: "~@content.perl;
 #  $*ERR.say: "Headers after: "~@headers.perl;
-  self.bless(*, 
+  self.bless(
     :$client, :$status, :$message, :$protocol     ##,
 #    :headers(@headers), :content(@content)       ## Bug? These aren't set.
   )!initialize(@headers, @content);
