@@ -1,6 +1,6 @@
 use v6;
 
-class HTTP::Client;
+unit class HTTP::Client;
 
 our $VERSION = '0.2'; ## The version of HTTP::Client.
 

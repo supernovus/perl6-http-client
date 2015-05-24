@@ -1,6 +1,6 @@
 use v6;
 
-class HTTP::Client::Request;
+unit class HTTP::Client::Request;
 
 ## This is the request class. It represents a request to an HTTP server.
 
