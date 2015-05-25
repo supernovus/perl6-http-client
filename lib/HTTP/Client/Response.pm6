@@ -1,6 +1,6 @@
 use v6;
 
-class HTTP::Client::Response;
+unit class HTTP::Client::Response;
 
 ## This is the response class. It represents a response from an HTTP server.
 
