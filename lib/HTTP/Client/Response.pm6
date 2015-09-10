@@ -26,7 +26,6 @@ has @!content;       ## The body of the message from the server.
 ## We override new, and expect the response from the server
 ## to be passed in, as well as a copy of our HTTP::Client object.
 method new ($server_response, $client) {
-#  $*ERR.say: "Server response: $server_response";
   my @content = $server_response.split($CRLF);
   my $status_line = @content.shift;
   my ($protocol, $status, $message) = $status_line.split(/\s/);
@@ -36,7 +35,6 @@ method new ($server_response, $client) {
   my @headers;
   while @content {
     my $line = @content.shift;
-#    $*ERR.say: "Parsing line: $line";
     last if $line eq ''; ## End of headers.
     my ($name, $value) = $line.split(': ');
     my $header = $name => $value;
@@ -97,31 +95,36 @@ method header ($wanted) {
 
 ## de-chunking algorithm stolen shamelessly from LWP::Simple
 method dechunk (@contents) {
-  my $transfer = self.header('Transfer-Encoding');
-  if ! $transfer || $transfer !~~ /:i chunked/ {
-    ## dechunking only to be done if Transfer-Encoding says so.
-    return @contents;
-  }
-  my @con = ();
-  # Chunk start: length as hex word
-  my $length = @contents.shift;
-     
-  ## Chunk length is hex and could contain extensions.
-  ## See RFC2616, 3.6.1  -- e.g.  '5f32; xxx=...'
-  if $length ~~ /^ \w+ / {
-    $length = :16($length);
-  }
-  else {
-    last;
-  }
+    my $transfer = self.header('Transfer-Encoding');
+    if ! $transfer || $transfer !~~ /:i chunked/ {
+        ## dechunking only to be done if Transfer-Encoding says so.
+        return @contents;
+    }
+    my @con = ();
+    while @contents {
+        # Chunk start: length as hex word
+        my $length = @contents.shift;
 
-  ## Continue reading for '$length' bytes
-  while $length > 0 && @contents {
-    my $line = @contents.shift;
-    @con.push($line);
-    $length -= $line.chars; #.bytes, not .chars
-  }
-  return @con;
+        ## Chunk length is hex and could contain extensions.
+        ## See RFC2616, 3.6.1  -- e.g.  '5f32; xxx=...'
+        if $length ~~ /^ \w+ / {
+            $length = :16($length);
+        }
+        else {
+            last;
+        }
+        if $length == 0 {
+            last;
+        }
+
+        ## Continue reading for '$length' bytes
+        while $length > 0 && @contents {
+            my $line = @contents.shift;
+            @con.push($line);
+            $length -= $line.chars; #.bytes, not .chars
+        }
+    }
+    return @con;
 }
 
 method contents (Bool :$dechunk=True) {
@@ -169,4 +172,3 @@ method redirect (:$loose, :$url) {
   }
   return False;
 }
-
