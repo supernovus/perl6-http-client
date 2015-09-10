@@ -102,36 +102,26 @@ method dechunk (@contents) {
     ## dechunking only to be done if Transfer-Encoding says so.
     return @contents;
   }
-  my $pos = 0;
-  while @contents {
-    ## Chunk start: length as hex word
-    my $length = splice(@contents, $pos, 1);
-      
-    ## Chunk length is hex and could contain extensions.
-    ## See RFC2616, 3.6.1  -- e.g.  '5f32; xxx=...'
-    if $length ~~ /^ \w+ / {
-      $length = :16($length);
-    }
-    else {
-      last;
-    }
-
-    ## Continue reading for '$length' bytes
-    while $length > 0 && @contents.exists($pos) {
-      my $line = @contents[$pos];
-      $length -= $line.bytes; #.bytes, not .chars
-      #$length--;              # <CR> removed.
-      $pos++;
-    }
-
-    ## Stop decoding when a zero is encountered, RFC2616 again.
-    if $length == 0 {
-      ## Truncate document here.
-      splice(@contents, $pos);
-      last;
-    }
+  my @con = ();
+  # Chunk start: length as hex word
+  my $length = @contents.shift;
+     
+  ## Chunk length is hex and could contain extensions.
+  ## See RFC2616, 3.6.1  -- e.g.  '5f32; xxx=...'
+  if $length ~~ /^ \w+ / {
+    $length = :16($length);
   }
-  return @contents;
+  else {
+    last;
+  }
+
+  ## Continue reading for '$length' bytes
+  while $length > 0 && @contents {
+    my $line = @contents.shift;
+    @con.push($line);
+    $length -= $line.chars; #.bytes, not .chars
+  }
+  return @con;
 }
 
 method contents (Bool :$dechunk=True) {
