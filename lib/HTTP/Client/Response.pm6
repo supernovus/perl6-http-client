@@ -26,7 +26,6 @@ has @!content;       ## The body of the message from the server.
 ## We override new, and expect the response from the server
 ## to be passed in, as well as a copy of our HTTP::Client object.
 method new ($server_response, $client) {
-#  $*ERR.say: "Server response: $server_response";
   my @content = $server_response.split($CRLF);
   my $status_line = @content.shift;
   my ($protocol, $status, $message) = $status_line.split(/\s/);
@@ -36,7 +35,6 @@ method new ($server_response, $client) {
   my @headers;
   while @content {
     my $line = @content.shift;
-#    $*ERR.say: "Parsing line: $line";
     last if $line eq ''; ## End of headers.
     my ($name, $value) = $line.split(': ');
     my $header = $name => $value;
@@ -97,41 +95,36 @@ method header ($wanted) {
 
 ## de-chunking algorithm stolen shamelessly from LWP::Simple
 method dechunk (@contents) {
-  my $transfer = self.header('Transfer-Encoding');
-  if ! $transfer || $transfer !~~ /:i chunked/ {
-    ## dechunking only to be done if Transfer-Encoding says so.
-    return @contents;
-  }
-  my $pos = 0;
-  while @contents {
-    ## Chunk start: length as hex word
-    my $length = splice(@contents, $pos, 1);
-      
-    ## Chunk length is hex and could contain extensions.
-    ## See RFC2616, 3.6.1  -- e.g.  '5f32; xxx=...'
-    if $length ~~ /^ \w+ / {
-      $length = :16($length);
+    my $transfer = self.header('Transfer-Encoding');
+    if ! $transfer || $transfer !~~ /:i chunked/ {
+        ## dechunking only to be done if Transfer-Encoding says so.
+        return @contents;
     }
-    else {
-      last;
-    }
+    my @con = ();
+    while @contents {
+        # Chunk start: length as hex word
+        my $length = @contents.shift;
 
-    ## Continue reading for '$length' bytes
-    while $length > 0 && @contents.exists($pos) {
-      my $line = @contents[$pos];
-      $length -= $line.bytes; #.bytes, not .chars
-      #$length--;              # <CR> removed.
-      $pos++;
-    }
+        ## Chunk length is hex and could contain extensions.
+        ## See RFC2616, 3.6.1  -- e.g.  '5f32; xxx=...'
+        if $length ~~ /^ \w+ / {
+            $length = :16($length);
+        }
+        else {
+            last;
+        }
+        if $length == 0 {
+            last;
+        }
 
-    ## Stop decoding when a zero is encountered, RFC2616 again.
-    if $length == 0 {
-      ## Truncate document here.
-      splice(@contents, $pos);
-      last;
+        ## Continue reading for '$length' bytes
+        while $length > 0 && @contents {
+            my $line = @contents.shift;
+            @con.push($line);
+            $length -= $line.chars; #.bytes, not .chars
+        }
     }
-  }
-  return @contents;
+    return @con;
 }
 
 method contents (Bool :$dechunk=True) {
@@ -179,4 +172,3 @@ method redirect (:$loose, :$url) {
   }
   return False;
 }
-
