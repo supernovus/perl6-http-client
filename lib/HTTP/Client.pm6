@@ -99,7 +99,7 @@ method do-request (HTTP::Client::Request $request, :$follow=0) {
 #  $*ERR.say: "Connecting to '$host' on '$port'";
 
   my $sock = IO::Socket::INET.new(:$host, :$port);
-  $sock.send(~$request);
+  $sock.print(~$request);
   my $resp;
   my $chunk;
   repeat {
