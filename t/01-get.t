@@ -5,7 +5,7 @@ use Test;
 plan 6;
 
 my $http = HTTP::Client.new;
-my $res = $http.get('http://perl6.org/');
+my $res = $http.get('http://http.perl6.org/');
 #my $res = $http.get('http://127.0.0.1:8080/test.txt');
 #$*ERR.say: "~Status: "~$res.status;
 #$*ERR.say: "~Message: "~$res.message;

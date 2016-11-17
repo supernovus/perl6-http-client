@@ -8,7 +8,7 @@ my $http = HTTP::Client.new;
 #my $res = $htto.get('http://huri.net/test.txt');
 my $req = $http.post(:multipart);
 #$req.url('http://127.0.0.1:8080/test.txt');
-$req.url('http://perl6.org');
+$req.url('http://http.perl6.org');
 $req.add-field(:id<1984>);
 $req.add-file(
   :name("upload"),     :filename("test.txt"), 
