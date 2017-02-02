@@ -12,6 +12,7 @@ has $.http-version is rw = '1.1'; ## Supported HTTP version.
 
 use HTTP::Client::Request;
 use HTTP::Client::Response;
+use IO::Socket::SSL;
 
 ## Make a request object, and return it.
 method make-request(Str $method, Str $url?, :%query, :%data, :@files, :$multipart) {
@@ -88,17 +89,19 @@ method put ($url?, :%query, :%data, :%files, :$multipart, :$follow) {
 
 ## Do the request
 method do-request (HTTP::Client::Request $request, :$follow=0) {
-  if ($request.protocol ne 'http') {
+  if ($request.protocol ne 'http' | 'https') {
     die "Unsupported protocol, '{$request.protocol}'.";
   }
 
+  my \if-https = $request.protocol eq 'https';
+
   my $host = $request.host;
-  my $port = 80;
+  my $port = if-https ?? 443 !! 80;
   if $request.port { $port = $request.port; }
 
 #  $*ERR.say: "Connecting to '$host' on '$port'";
 
-  my $sock = IO::Socket::INET.new(:$host, :$port);
+  my $sock = if-https ?? IO::Socket::SSL.new(:$host, :$port) !!  IO::Socket::INET.new(:$host, :$port);
   $sock.print(~$request);
   my $resp;
   my $chunk;
