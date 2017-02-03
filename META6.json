@@ -2,7 +2,7 @@
   "name"        : "HTTP::Client",
   "version"     : "*",
   "description" : "A flexible HTTP Client library",
-  "depends"     : [ "MIME::Base64", "HTTP::Status" ],
+  "depends"     : [ "MIME::Base64", "HTTP::Status", "IO::Socket::SSL" ],
   "provides" : {
     "HTTP::Client"           : "lib/HTTP/Client.pm6",
     "HTTP::Client::Request"  : "lib/HTTP/Client/Request.pm6",
