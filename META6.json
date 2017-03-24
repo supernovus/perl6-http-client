@@ -1,6 +1,6 @@
 {
   "name"        : "HTTP::Client",
-  "version"     : "*",
+  "version"     : "0.0.2",
   "description" : "A flexible HTTP Client library",
   "depends"     : [ "MIME::Base64", "HTTP::Status", "IO::Socket::SSL" ],
   "provides" : {
