@@ -52,10 +52,10 @@ method simple-request ($method, $url?, :%query, :$follow) {
 method data-request 
 ($method, $url?, :%query, :%data, :%files, :$multipart, :$follow) {
   if ($url) {
-    my $req = self.make-request('POST', $url, :%query, :%data, :%files, :$multipart);
+    my $req = self.make-request($method, $url, :%query, :%data, :%files, :$multipart);
     return self.do-request($req, :$follow);
   }
-  self.make-request('POST', :$multipart); ## Only multipart option is used.
+  self.make-request($method, :$multipart); ## Only multipart option is used.
 }
 
 ## GET request

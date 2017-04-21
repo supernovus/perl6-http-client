@@ -2,6 +2,8 @@
   "name"        : "HTTP::Client",
   "version"     : "0.0.2",
   "description" : "A flexible HTTP Client library",
+  "authors"     : ["Timothy Totten"],
+  "license"     : "Artistic-2.0",
   "depends"     : [ "MIME::Base64", "HTTP::Status", "IO::Socket::SSL" ],
   "provides" : {
     "HTTP::Client"           : "lib/HTTP/Client.pm6",
