@@ -290,7 +290,6 @@ method Str {
   }
   ## Okay, add the headers.
   for @!headers -> $header {
-    if $header.key eq 'Content-Type' { next; }
     $output ~= "{$header.key}: {$header.value}$CRLF";
   }
   if $!data {
