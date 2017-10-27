@@ -8,7 +8,7 @@ NOTE: This library is going to have a major rewrite coming up shortly.
 -------------------------------------------------------------------------------
 
 Inspired by LWP and HTTP::Client from Perl 5, and LWP::Simple
-from Perl 6, this is a simple class for building HTTP clients 
+from Perl 6, this is a simple class for building HTTP clients
 using Perl 6.
 
 It's not based on any of those when it comes to API, but instead
@@ -46,7 +46,7 @@ A more advanced POST multipart/form-data request:
   $request.url('http://example.com/web/service');
   $request.add-field(:id(37271));
   $request.add-file(
-    :name("upload"),     :filename("file.txt"), 
+    :name("upload"),     :filename("file.txt"),
     :type("text/plain"), :content("hello world...")
   );
   my $response = $request.run;
@@ -60,11 +60,11 @@ in HTTP::Client (TRACE, OPTIONS, CONNECT, PATCH, DEBUG, etc.)
 
 As it's name states, this library is specifically for HTTP Clients.
 If you want something for building HTTP Servers, see HTTP::Easy.
-If you want something for Request/Reponse objects for your Web Application, 
+If you want something for Request/Reponse objects for your Web Application,
 see WWW::App. Full disclosure: I wrote both of those libraries too.
 
 Also, there are some weird issues with the IO::Socket::INET library in
-the current Rakudo nom, which are affecting connecting to outside servers.
+the current Rakudo master, which are affecting connecting to outside servers.
 So the tests in the t/ folder currently depend on the HTTP::Easy library,
 and in particular, the examples/test.p6 script from HTTP::Easy to be running
 before you run the tests.
@@ -79,7 +79,7 @@ It should also require:
 
 * URI                <https://github.com/ihrd/uri/>
 
-But at the current time, that module is not compiling under "nom" which
+But at the current time, that module is not compiling under "master" which
 the rest of this is focused on, so for the time being, I'm using a very
 limited inline URI grammar instead.
 
@@ -90,4 +90,3 @@ Timothy Totten
 = License =
 
 Artistic License 2.0
-

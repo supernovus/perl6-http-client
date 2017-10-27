@@ -32,7 +32,7 @@ has $!boundary;          ## A unique boundary, set on first use.
 #### Grammars
 
 ## A grammar representing a URL, as per our usage anyway.
-## This is temporary until the URI library is working under "nom"
+## This is temporary until the URI library is working under "master"
 ## then we'll move to using that instead, as it is far more complete.
 grammar URL {
   regex TOP {
