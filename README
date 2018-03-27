@@ -1,9 +1,15 @@
 HTTP::Client -- Perl 6 library for building HTTP Clients
 -------------------------------------------------------------------------------
 
-NOTE: This library is going to have a major rewrite coming up shortly.
-      A lot of things will be gutted and overhauled.
-      Stay tuned for more details!
+NOTE 1: This library is way overdue for a rewrite. See the '2.0' branch for
+        what I was working on the last time I looked at this (it's been a few
+        years...)
+
+NOTE 2: As I don't think I'll be able to work on it for quite some time,
+        and there are certain pieces of functionality which are completely
+        broken in the current version of this library, such as chunked encoding,
+        and anything involving binary file transfers,
+        please consider using HTTP::UserAgent or Net::HTTP instead.
 
 -------------------------------------------------------------------------------
 
