@@ -1,11 +1,11 @@
-branches:
-  except:
-    - gh-pages
-language: perl6
-sudo: false
-perl6:
-  - latest
-#  - 2015.09
+language:
+  - minimal
+
+services:
+  - docker
+
 install:
-  - rakudobrew build-panda
-  - panda installdeps .
+  - docker pull jjmerelo/raku-test
+  - docker images
+
+script: docker run -t -v  $TRAVIS_BUILD_DIR:/test jjmerelo/raku-test
