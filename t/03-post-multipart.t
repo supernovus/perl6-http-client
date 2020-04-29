@@ -8,7 +8,7 @@ my $http = HTTP::Client.new;
 #my $res = $htto.get('http://huri.net/test.txt');
 my $req = $http.post(:multipart);
 #$req.url('http://127.0.0.1:8080/test.txt');
-$req.url('https://http.perl6.org');
+$req.url('https://eu.httpbin.org/post');
 $req.add-field(:id<1984>);
 $req.add-file(
   :name("upload"),     :filename("test.txt"), 
@@ -24,6 +24,7 @@ my $content = $res.content;
 #$*ERR.say: "~Content: $content";
 #$*ERR.say: "~Headers: "~$res.headers.perl;
 ok $content, "Content was returned.";
-ok $content ~~ /Perl/, "Content was correct.";
-ok $res.header('Content-Type') ~~ /^text\/html/, "Correct content type.";
+
+ok $content ~~ /Client/, "Content was correct.";
+ok $res.header('Content-Type') ~~ /^application/, "Correct content type.";
 
