@@ -1,6 +1,6 @@
 {
   "name"        : "HTTP::Client",
-  "version"     : "0.0.2",
+  "version"     : "0.0.3",
   "description" : "A flexible HTTP Client library",
   "authors"     : ["Timothy Totten"],
   "license"     : "Artistic-2.0",
